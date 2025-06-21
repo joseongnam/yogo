@@ -1,0 +1,55 @@
+body, html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+#root {
+  display: block; 
+}
+
+div{
+  box-sizing : border-box
+}
+
+li{
+  list-style: none;
+}
+  
+.event-nav{
+  width: 100vw;
+  height: 40px;
+  background-color: rgb(50, 28, 250);
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;  
+  font-weight: bold;
+  font-size: 13px;
+}
+
+.main-nav{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 30px;
+}
+
+
+
+
+.main-nav ul{
+  display: flex;
+  gap: 2rem;
+  padding: 0;
+  margin: 0;
+  font-weight: bold;
+}
+
+.box{
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+
+}
+
