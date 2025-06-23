@@ -2,7 +2,8 @@ import { useState } from 'react'
 import './App.css'
 import {} from 'react-bootstrap'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBars, faBagShopping } from '@fortawesome/free-solid-svg-icons';
+import { faBagShopping,faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
+import { faUser } from '@fortawesome/free-regular-svg-icons';
 import { Navigate, Route, Routes } from 'react-router-dom';
 
 function App() {
@@ -27,17 +28,30 @@ function App() {
         <div className='box'>
         <span>로그인</span>
         <span>회원가입</span>
-          <span><FontAwesomeIcon icon={faBars} /></span>
-          <span></span>
+          <span><FontAwesomeIcon icon={faUser} /></span>
+          <span><FontAwesomeIcon icon={faMagnifyingGlass} /></span>
           <span><FontAwesomeIcon icon={faBagShopping} /></span>
           </div>
       </div>
     </nav>
     <div className='main-container'>
-      <div className='start-container'></div>
+      <div className='start-container'>
+        <div className="slide-box">
+          <img src="../public/img/car1-1.png" alt="" />
+        </div>
+        <div className="slide-box">
+          <img src="../public/img/car2-1.png" alt="" />
+        </div>
+        <div className="slide-box">
+          <img src="../public/img/car3-1.png" alt="" />
+        </div>
+      </div>
       <div className='middle-container'></div>
       <div className='end-container'></div>
     </div>
+    <button></button>
+    <button></button>
+    <button></button>
     </>
   )
 }
