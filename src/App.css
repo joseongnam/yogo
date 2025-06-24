@@ -107,3 +107,24 @@ li{
   }
   
 
+  .arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 30px;
+    color: white;
+    background: 0;
+    padding: 10px;
+    cursor: pointer;
+    z-index: 100;
+    user-select: none;
+    color : black;
+  }
+  
+  .arrow.left {
+    left: 10px;
+  }
+  
+  .arrow.right {
+    right: 10px;
+  }
