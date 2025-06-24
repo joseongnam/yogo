@@ -8,6 +8,8 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 
 function App() {
   const [count, setCount] = useState(0)
+  const [page, setPage] = useState('')
+
   return (
     <>
     <nav className='up-navbar'>
@@ -36,22 +38,34 @@ function App() {
     </nav>
     <div className='main-container'>
       <div className='start-container'>
-        <div className="slide-box">
+        <div className={`slide-box ${page === 'one' ? 'one' : ''}`}>
           <img src="../public/img/car1-1.png" alt="" />
+          <div className='btn-container'>
+            <button onClick={()=>{setPage('one')}}></button>
+            <button onClick={()=>{setPage('two')}}></button>
+            <button onClick={()=>{setPage('three')}}></button>
+          </div>
         </div>
-        <div className="slide-box">
+        <div className={`slide-box ${page === 'two' ? 'two' : ''}`}>
           <img src="../public/img/car2-1.png" alt="" />
+          <div className='btn-container'>
+            <button onClick={()=>{setPage('one')}}></button>
+            <button onClick={()=>{setPage('two')}}></button>
+            <button onClick={()=>{setPage('three')}}></button>
+          </div>
         </div>
-        <div className="slide-box">
+        <div className={`slide-box ${page === 'three' ? 'three' : ''}`}>
           <img src="../public/img/car3-1.png" alt="" />
+          <div className='btn-container'>
+            <button onClick={()=>{setPage('one')}}></button>
+            <button onClick={()=>{setPage('two')}}></button>
+            <button onClick={()=>{setPage('three')}}></button>
+          </div>
         </div>
       </div>
       <div className='middle-container'></div>
       <div className='end-container'></div>
     </div>
-    <button></button>
-    <button></button>
-    <button></button>
     </>
   )
 }
