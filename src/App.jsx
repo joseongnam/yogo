@@ -38,31 +38,22 @@ function App() {
     </nav>
     <div className='main-container'>
       <div className='start-container'>
-        <div className={`slide-box ${page === 'one' ? 'one' : ''}`}>
-          <img src="../public/img/car1-1.png" alt="" />
-          <div className='btn-container'>
-            <button onClick={()=>{setPage('one')}}></button>
-            <button onClick={()=>{setPage('two')}}></button>
-            <button onClick={()=>{setPage('three')}}></button>
-          </div>
-        </div>
-        {[one,two,three].map((num, index)=>{
-          <div className={`slide-box ${page === data.index ? data.index : ''}`} key={index}>
+        {['one','two','three'].map((num, index)=>{
+          return(
+          <div className={`slide-box ${page === num ? num : ''}`} key={index}>
             <img src={`../public/img/car${index+1}-1.png`} alt={`슬라이드${num}`} />
             <div className="btn-container">
-              {[one,two,three].map((data, i)=>{<button onclick={()=>{setPage({data.i})}}></button>})}
-
+              {['one','two','three'].map((num, index)=>{
+                return (<button onClick={()=>setPage(num)} key={index}></button>)})}
             </div>
-
-          </div>
+          </div>)
           })}
         </div>
       </div>
       <div className='middle-container'></div>
       <div className='end-container'></div>
-    </div>
     </>
   )
 }
 
-export default App
+export default
