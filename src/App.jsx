@@ -46,21 +46,16 @@ function App() {
             <button onClick={()=>{setPage('three')}}></button>
           </div>
         </div>
-        <div className={`slide-box ${page === 'two' ? 'two' : ''}`}>
-          <img src="../public/img/car2-1.png" alt="" />
-          <div className='btn-container'>
-            <button onClick={()=>{setPage('one')}}></button>
-            <button onClick={()=>{setPage('two')}}></button>
-            <button onClick={()=>{setPage('three')}}></button>
+        {[one,two,three].map((num, index)=>{
+          <div className={`slide-box ${page === data.index ? data.index : ''}`} key={index}>
+            <img src={`../public/img/car${index+1}-1.png`} alt={`슬라이드${num}`} />
+            <div className="btn-container">
+              {[one,two,three].map((data, i)=>{<button onclick={()=>{setPage({data.i})}}></button>})}
+
+            </div>
+
           </div>
-        </div>
-        <div className={`slide-box ${page === 'three' ? 'three' : ''}`}>
-          <img src="../public/img/car3-1.png" alt="" />
-          <div className='btn-container'>
-            <button onClick={()=>{setPage('one')}}></button>
-            <button onClick={()=>{setPage('two')}}></button>
-            <button onClick={()=>{setPage('three')}}></button>
-          </div>
+          })}
         </div>
       </div>
       <div className='middle-container'></div>
