@@ -55,19 +55,18 @@ li{
 
 .main-container{
     overflow: hidden;
+    position: relative;
 }
 
 .start-container{
   width: 300vw;
-  position: relative;
-  
-
+  display: flex;
+  transition: transform 0.5s;
 }
 
 .slide-box{
   width: 100vw;
-  float: left;
-
+  flex-shrink: 0;
 }
 
 .slide-box img{
@@ -78,38 +77,33 @@ li{
   .btn-container{
     position: absolute;
     top : 45vh;
-    left : 50vw;
-    z-index : 100;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
     display: flex;
-    gap: 5px;
+    gap: 10px;
+    z-index: 100;
   }
 
   .btn-container button {
-    background-color: black;
-    border: none;
     width: 7px;
     height: 7px;
     border-radius: 50%;
+    border: none;
+    background-color: black;
+    cursor: pointer;
+    line-height: 0;
     display: inline-block;
     padding: 0;
     margin: 0;
-    line-height: 0;
-    font-size: 0;
+    opacity : 0.5;
   }
 
-  .btn-container button:hover {
-    width: 17px;
+  .btn-container button.active {
+    width: 20px;
+    transition: 0.5s;
+    opacity : 1;
+    border-radius : 30%
   }
   
 
-.one{
-    translate: -0vw;
-  }
-
-.two{
-    translate: -100vw;
-  }
-
-.three{
-    translate: -200vw;
-  }

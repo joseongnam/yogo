@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import './App.css'
 import {} from 'react-bootstrap'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -7,8 +7,20 @@ import { faUser } from '@fortawesome/free-regular-svg-icons';
 import { Navigate, Route, Routes } from 'react-router-dom';
 
 function App() {
-  const [count, setCount] = useState(0)
-  const [page, setPage] = useState('')
+  const [page, setPage] = useState('one');
+  const pageToIndex = { one: 0, two: 1, three: 2 };
+  const translateX = `translateX(-${pageToIndex[page] * 100}vw)`;
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setPage((prev) => {
+        const nextIndex = (pageList.indexOf(prev) + 1) % pageList.length;
+        return pageList[nextIndex];
+      });
+    }, 5000);
+  
+    return () => clearInterval(interval);
+  }, [page]);
 
   return (
     <>
@@ -27,7 +39,7 @@ function App() {
             <li>고객센터</li>
           </ul>
         </div>
-        <div className='box'>
+        <div className='box' >
         <span>로그인</span>
         <span>회원가입</span>
           <span><FontAwesomeIcon icon={faUser} /></span>
@@ -37,23 +49,27 @@ function App() {
       </div>
     </nav>
     <div className='main-container'>
-      <div className='start-container'>
-        {['one','two','three'].map((num, index)=>{
-          return(
-          <div className={`slide-box ${page === num ? num : ''}`} key={index}>
-            <img src={`../public/img/car${index+1}-1.png`} alt={`슬라이드${num}`} />
-            <div className="btn-container">
-              {['one','two','three'].map((num, index)=>{
-                return (<button onClick={()=>setPage(num)} key={index}></button>)})}
-            </div>
-          </div>)
-          })}
-        </div>
+  <div className='start-container' style={{ transform: translateX, transition: 'transform 0.5s' }}>
+    {['one','two','three'].map((num, index) => (
+      <div className='slide-box' key={index}>
+        <img src={`/img/car${index+1}-1.png`} alt={`슬라이드${num}`} />
       </div>
+    ))}
+  </div>
+  <div className="btn-container">
+    {['one','two','three'].map((num, index) => (
+      <button
+        onClick={() => setPage(num)}
+        key={index}
+        className={page === num ? 'active' : ''}
+      ></button>
+    ))}
+  </div>
+</div>
       <div className='middle-container'></div>
       <div className='end-container'></div>
     </>
   )
 }
 
-export default
+export default App;
