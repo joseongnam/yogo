@@ -5,6 +5,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBagShopping,faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
 import { faUser } from '@fortawesome/free-regular-svg-icons';
 import { Navigate, Route, Routes } from 'react-router-dom';
+import Card from './components/card.jsx'
 
 function App() {
   const [page, setPage] = useState('one');
@@ -24,7 +25,7 @@ function App() {
     <>
       <nav className="up-navbar">
         <div className="event-nav">
-          <h7>👑이달의 리뷰왕! 6월 리뷰 이벤트 보러가기</h7>
+          <span>👑이달의 리뷰왕! 6월 리뷰 이벤트 보러가기</span>
         </div>
         <div className="main-nav">
           <div className="box" style={{ fontWeight: 'bold', fontSize: '30px' }}>YOGO</div>
@@ -84,6 +85,18 @@ function App() {
           setPage(pageList[nextIndex]);
         }}>&gt;</div>
       </div>
+      <div className="sale-products">
+        <h1>요고특가</h1><span>득템은 타이밍, 기회는 지금뿐!</span>
+        <div className="product-row">
+          {[...Array(8)].map((_, i)=>{
+            return <Card key={i}/>
+          } )}
+          </div>
+          <div style={{display : 'flex', justifyContent : 'center' }}>
+        <button className='more-btn'>특가상품 더보기 &gt;</button>
+        </div>
+      </div>
+      <div className="new-products"></div>
     </>
   );
 }
