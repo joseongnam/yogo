@@ -37,6 +37,10 @@ li{
   padding: 0 20px;
 }
 
+.up-navbar{
+  border-bottom: 1px solid #eee;
+}
+
 .main-nav ul{
   display: flex;
   gap: 2rem;
@@ -50,6 +54,10 @@ li{
   gap: 1rem;
   align-items: center;
 
+}
+
+.box li{
+  cursor : pointer;
 }
 
 .main-container{
@@ -190,6 +198,45 @@ li{
   justify-content: space-between;
 }
 
+.sale-div{
+  height: 200px;
+      display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.sale-div h3{
+  margin: 0;
+}
+
+.information{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  display: flex;
+  margin: 20px auto;
+  max-width: 1200px;
+  padding: 0 20px;
+
+}
+
+.information h1{
+
+  font-weight: bold;
+  font-size: 30px;
+}
+
+.last ul{
+  margin: 20px auto;
+  max-width: 1200px;
+  padding: 0 20px;
+}
+.last li{
+  display: inline-block;
+  margin-right: 20px;
+
+
+}
 
 @media (max-width: 1024px) {
   .product-card {
