@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import {} from "react-bootstrap";
+import { AuthContext } from "../AuthContext.jsx";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faBagShopping,
@@ -7,9 +8,24 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { faUser } from "@fortawesome/free-regular-svg-icons";
 import { Navigate, Outlet, Route, Routes, useNavigate } from "react-router-dom";
+import { jwtDecode } from "jwt-decode";
 
 function Layout() {
   let navigate = useNavigate();
+  const [userName, setUserName] = useState(null);
+  const { isLogin, logout } = useContext(AuthContext);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      try {
+        const decoded = jwtDecode(token);
+        setUserName(decoded.name);
+      } catch (err) {
+        console.error("토큰 디코딩 실패:", err);
+      }
+    }
+  }, []);
 
   return (
     <>
@@ -67,15 +83,33 @@ function Layout() {
             </ul>
           </div>
           <div className="box">
+            {isLogin ? (
+              <span onClick={logout}>로그아웃</span>
+            ) : (
+              <span
+                onClick={() => {
+                  navigate("/login");
+                }}
+              >
+                로그인
+              </span>
+            )}
+            |
+            {isLogin ? (
+              <span>{userName}님</span>
+            ) : (
+              <span
+                onClick={() => {
+                  navigate("/Join");
+                }}
+              >
+                회원가입
+              </span>
+            )}
             <span
-              onClick={() => {
-                navigate("/login");
-              }}
-            >
-              로그인
-            </span>
-            <span>회원가입</span>
-            <span>
+            onClick={()=>{
+              if(isLogin){navigate('/mypage')}else{navigate('/login')}
+            }}>
               <FontAwesomeIcon icon={faUser} />
             </span>
             <span>
