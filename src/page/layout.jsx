@@ -1,5 +1,5 @@
 import { useState, useEffect, useContext } from "react";
-import {} from "react-bootstrap";
+import { NavItem } from "react-bootstrap";
 import { AuthContext } from "../AuthContext.jsx";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -14,21 +14,20 @@ function Layout() {
   let navigate = useNavigate();
   const [userName, setUserName] = useState(null);
   const { isLogin, logout } = useContext(AuthContext);
-
+  const [userInfo, setUserInfo] = useState(null);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
       try {
         const decoded = jwtDecode(token);
+        setUserInfo(decoded);
         setUserName(decoded.name);
       } catch (err) {
         console.error("토큰 디코딩 실패:", err);
       }
     }
   }, []);
-
-
 
   return (
     <>
@@ -98,21 +97,31 @@ function Layout() {
               </span>
             )}
             |
-            {isLogin ? (
-              <span>{userName}님</span>
-            ) : (
+            {isLogin && userInfo ? (
               <span
                 onClick={() => {
-                  navigate("/Join");
+                  console.log("isAdmin 값:", userInfo.isAdmin); // 디버깅용
+                  if (userInfo.isAdmin) {
+                    navigate("/manager");
+                  } else {
+                    navigate("/");
+                  }
                 }}
               >
-                회원가입
+                {userName}님
               </span>
+            ) : (
+              <span onClick={() => navigate("/Join")}>회원가입</span>
             )}
             <span
-            onClick={()=>{
-              if(isLogin){navigate('/mypage')}else{navigate('/login')}
-            }}>
+              onClick={() => {
+                if (isLogin) {
+                  navigate("/mypage");
+                } else {
+                  navigate("/login");
+                }
+              }}
+            >
               <FontAwesomeIcon icon={faUser} />
             </span>
             <span>

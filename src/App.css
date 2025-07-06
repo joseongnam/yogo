@@ -491,6 +491,22 @@ button {
   margin-top: 4px;
 }
 
+.background{
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  background-color: white;
+}
+
+.registration-container{
+  width: 100%;
+  max-width: 400px;
+  padding: 1rem;
+  margin-top: 1rem;
+  position: relative;
+}
+
 @media (max-width: 1024px) {
   .product-card {
     flex: 1 1 calc(33.33% - 20px);
