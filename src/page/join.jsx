@@ -9,7 +9,7 @@ function Join() {
   const [name, setName] = useState("");
   const [saveId, setSaveId] = useState(false);
   const [showMessage, setShowMessage] = useState("");
-  const [phonePart1, setPhonePart1] = useState("");
+  const [phonePart1, setPhonePart1] = useState("010");
   const [phonePart2, setPhonePart2] = useState("");
   const [phonePart3, setPhonePart3] = useState("");
   const navigate = useNavigate();
@@ -181,9 +181,9 @@ function Join() {
                 });
                 const result = await response.json();
                 alert(result.message || "회원가입 완료!");
-if (response.ok) {
-  navigate("/");
-}
+                if (response.ok) {
+                  navigate("/");
+                }
               } catch (err) {
                 alert("에러 발생" + err.message);
               }
