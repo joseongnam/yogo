@@ -100,7 +100,6 @@ function Layout() {
             {isLogin && userInfo ? (
               <span
                 onClick={() => {
-                  console.log("isAdmin 값:", userInfo.isAdmin); // 디버깅용
                   if (userInfo.isAdmin) {
                     navigate("/manager");
                   } else {

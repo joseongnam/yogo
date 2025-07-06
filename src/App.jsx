@@ -17,6 +17,8 @@ import Manager from "./page/manager.jsx";
 import { AuthProvider } from "./AuthContext.jsx";
 import Mypage from "./page/mypage.jsx"
 import Detail from "./page/detail.jsx"
+import AdminRoute from "./components/AdminRoute.jsx"
+
 function App() {
   let navigate = useNavigate();
 
@@ -25,7 +27,11 @@ function App() {
       <AuthProvider>
         <Routes>
           <Route path="/login" element={<Login />} />
-          <Route path="/manager" element={<Manager />}></Route>
+          <Route path="/manager" element={
+            <AdminRoute>
+            <Manager />
+            </AdminRoute>
+            }></Route>
           <Route path="/mypage" element={<Mypage />}></Route>
           <Route element={<Layout />}>
             <Route path="/" element={<Home />} />

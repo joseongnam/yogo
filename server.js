@@ -19,6 +19,21 @@ const passport = require("passport");
 const LocalStrategy = require("passport-local");
 const jwt = require("jsonwebtoken");
 
+function isAdminMiddleware(req, res, next) {
+  try {
+    const token = req.headers.authorization?.split(" ")[1];
+    const decoded = jwt.verify(token, process.env.SESSION_PASSWORD);
+
+    if (!decoded.isAdmin) {
+      return res.status(403).json({ message: "관리자만 접근 가능" });
+    }
+
+    next();
+  } catch (err) {
+    return res.status(401).json({ message: "인증 실패", error: err.message });
+  }
+}
+
 // S3 설정
 const s3 = new S3Client({
   region: "ap-northeast-2",
@@ -200,7 +215,7 @@ async function startServer() {
     console.error("❌ DB 연결 실패:", err);
   }
 
-  app.post("/upload", upload.array("img", 10), async (req, res) => {
+  app.post("/upload", isAdminMiddleware, upload.array("img", 10), async (req, res) => {
     try {
       let region = s3.config.region;
       if (typeof region === "function") {
@@ -253,7 +268,7 @@ async function startServer() {
     }
   });
 
-  app.delete("/delete", async (req, res) => {
+  app.delete("/delete", isAdminMiddleware, async (req, res) => {
     const { key } = req.body;
 
     if (!key) {
@@ -276,7 +291,7 @@ async function startServer() {
     }
   });
 
-  app.delete("/delete-multiple", async (req, res) => {
+  app.delete("/delete-multiple", isAdminMiddleware, async (req, res) => {
     const { keys } = req.body; // 배열로 ["ad/xxx.png", "products/yyy.jpg"]
 
     if (!Array.isArray(keys) || keys.length === 0) {
