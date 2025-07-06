@@ -15,6 +15,7 @@ function Layout() {
   const [userName, setUserName] = useState(null);
   const { isLogin, logout } = useContext(AuthContext);
 
+
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
@@ -26,6 +27,8 @@ function Layout() {
       }
     }
   }, []);
+
+
 
   return (
     <>

@@ -1,81 +1,105 @@
-import { useState, useEffect } from 'react'
-import {} from 'react-bootstrap'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBagShopping,faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
-import { faUser } from '@fortawesome/free-regular-svg-icons';
-import { Navigate, Route, Routes, useNavigate } from 'react-router-dom';
-import Card from '../components/card.jsx'
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import Card from "../components/card.jsx";
 
-function Home(){
-
-      const [page, setPage] = useState('one');
-  const pageList = ['one', 'two', 'three'];
-  const pageIndex = pageList.indexOf(page);
-  const navigate = useNavigate()
+function Home() {
+  const [page, setPage] = useState(0); // 현재 슬라이드 인덱스
+  const [adImages, setAdImages] = useState([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
+    const fetchImages = async () => {
+      try {
+        const res = await fetch("/api/image-list?prefix=ad/");
+        if (!res.ok) throw new Error(`서버 오류: ${res.status}`);
+        const data = await res.json();
+        setAdImages(data);
+      } catch (err) {
+        console.error("이미지 불러오기 실패:", err);
+      }
+    };
+  
+    fetchImages();
+  }, []);
+  
+
+  useEffect(() => {
+    if (adImages.length === 0) return; // 이미지 없으면 동작하지 않도록
+
     const interval = setInterval(() => {
-      const nextIndex = (pageIndex + 1) % pageList.length;
-      setPage(pageList[nextIndex]);
+      setPage((prev) => (prev + 1) % adImages.length);
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [page]);
+  }, [adImages]);
 
-  return(
+  return (
     <>
-    
       <div className="main-container">
-        {/* 양옆 화살표 버튼 */}
         <div
           className="start-container"
           style={{
-            transform: `translateX(-${pageIndex * 100}vw)`,
-            transition: 'transform 0.5s',
+            transform: `translateX(-${page * 100}vw)`,
+            transition: "transform 0.5s",
           }}
         >
-          {pageList.map((_, index) => (
+          {adImages.map((imgUrl, index) => (
             <div className="slide-box" key={index}>
-              <img src={`/img/car${index + 1}-1.png`} alt={`슬라이드${index + 1}`} />
+              <img src={imgUrl} alt={`슬라이드${index + 1}`} />
             </div>
           ))}
         </div>
 
         <div className="btn-container">
-          {pageList.map((num, index) => (
+          {adImages.map((_, index) => (
             <button
-              onClick={() => setPage(num)}
               key={index}
-              className={page === num ? 'active' : ''}
+              className={page === index ? "active" : ""}
+              onClick={() => setPage(index)}
             ></button>
           ))}
         </div>
 
-        {/* 화살표 버튼 */}
-        <div className="arrow left" onClick={() => {
-          const prevIndex = (pageIndex - 1 + pageList.length) % pageList.length;
-          setPage(pageList[prevIndex]);
-        }}>&lt;</div>
+        <div
+          className="arrow left"
+          onClick={() =>
+            setPage((prev) => (prev - 1 + adImages.length) % adImages.length)
+          }
+        >
+          &lt;
+        </div>
 
-        <div className="arrow right" onClick={() => {
-          const nextIndex = (pageIndex + 1) % pageList.length;
-          setPage(pageList[nextIndex]);
-        }}>&gt;</div>
-      </div>
-      <div className="sale-products">
-        <h1>요고특가</h1><span>득템은 타이밍, 기회는 지금뿐!</span>
-        <div className="product-row">
-          {[...Array(8)].map((_, i)=>{
-            return <Card key={i}/>
-          } )}
-          </div>
-          <div style={{display : 'flex', justifyContent : 'center' }}>
-        <button className='more-btn' onClick={()=>{navigate('/sale-products')}}>특가상품 더보기 &gt;</button>
+        <div
+          className="arrow right"
+          onClick={() => setPage((prev) => (prev + 1) % adImages.length)}
+        >
+          &gt;
         </div>
       </div>
+
+      <div className="sale-products">
+        <h1>요고특가</h1>
+        <span>득템은 타이밍, 기회는 지금뿐!</span>
+        <div className="product-row">
+          {[...Array(8)].map((_, i) => (
+            <Card key={i} />
+          ))}
+        </div>
+        <div style={{ display: "flex", justifyContent: "center" }}>
+          <button
+            className="more-btn"
+            onClick={() => {
+              navigate("/sale-products");
+            }}
+          >
+            특가상품 더보기 &gt;
+          </button>
+        </div>
+      </div>
+
       <div className="new-products"></div>
     </>
-  )
+  );
 }
 
-export default Home
+export default Home;
