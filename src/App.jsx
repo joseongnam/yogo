@@ -1,13 +1,6 @@
-import { useState, useEffect } from "react";
 import "./App.css";
 import {} from "react-bootstrap";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faBagShopping,
-  faMagnifyingGlass,
-} from "@fortawesome/free-solid-svg-icons";
-import { faUser } from "@fortawesome/free-regular-svg-icons";
-import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
+import { Route, Routes, useNavigate } from "react-router-dom";
 import Home from "./page/home.jsx";
 import SaleProducts from "./page/sale-products.jsx";
 import Layout from "./page/layout.jsx";
@@ -20,8 +13,6 @@ import Detail from "./page/detail.jsx"
 import AdminRoute from "./components/AdminRoute.jsx"
 
 function App() {
-  let navigate = useNavigate();
-
   return (
     <>
       <AuthProvider>
