@@ -1,5 +1,6 @@
 import { jwtDecode } from "jwt-decode";
 import { useState, useEffect } from "react";
+import ProductsList from "./products-list";
 
 
 function Manager() {
@@ -163,6 +164,8 @@ function Manager() {
           선택 삭제 ({selected.length}개)
         </button>
       )}
+      {/* 상품 관리 컴포넌트 */}
+      <ProductsList />
     </div>
   );
 }

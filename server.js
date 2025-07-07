@@ -153,13 +153,13 @@ async function startServer() {
 
       try {
         const hashedPassword = await bcrypt.hash(password, 10);
-        const isAdmin = false
+        const isAdmin = false;
         await db.collection("user").insertOne({
           email,
           name,
           pw: hashedPassword,
           phoneNumber,
-          isAdmin
+          isAdmin,
         });
         res.status(200).json({ message: "회원가입 완료!" });
       } catch (e) {
@@ -188,7 +188,11 @@ async function startServer() {
         }
 
         const token = jwt.sign(
-          { email: user.email, name: user.name, isAdmin: user.isAdmin || false, },
+          {
+            email: user.email,
+            name: user.name,
+            isAdmin: user.isAdmin || false,
+          },
           SECRET_KEY,
           {
             expiresIn: "1h",
@@ -207,6 +211,32 @@ async function startServer() {
       res.send("서버 및 DB 정상 작동 중");
     });
 
+    app.post(
+      "/upload",
+      isAdminMiddleware,
+      upload.array("img", 10),
+      async (req, res) => {
+        try {
+          let region = s3.config.region;
+          if (typeof region === "function") {
+            region = await region();
+          }
+          if (typeof region === "object" && region.region) {
+            region = region.region;
+          }
+
+          const locations = req.files.map((file) => {
+            return `https://yogojo.s3.${region}.amazonaws.com/${file.key}`;
+          });
+
+          res.json({ message: "업로드 완료", location: locations });
+        } catch (err) {
+          console.error("업로드 중 오류:", err);
+          res.status(500).json({ message: "서버 오류", error: err.message });
+        }
+      }
+    );
+
     // 서버 시작
     app.listen(process.env.PORT, () => {
       console.log(`🚀 서버 실행중: http://localhost:${process.env.PORT}`);
@@ -214,28 +244,6 @@ async function startServer() {
   } catch (err) {
     console.error("❌ DB 연결 실패:", err);
   }
-
-  app.post("/upload", isAdminMiddleware, upload.array("img", 10), async (req, res) => {
-    try {
-      let region = s3.config.region;
-      if (typeof region === "function") {
-        region = await region();
-      }
-      if (typeof region === "object" && region.region) {
-        region = region.region;
-      }
-  
-      const locations = req.files.map((file) => {
-        return `https://yogojo.s3.${region}.amazonaws.com/${file.key}`;
-      });
-  
-      res.json({ message: "업로드 완료", location: locations });
-    } catch (err) {
-      console.error("업로드 중 오류:", err);
-      res.status(500).json({ message: "서버 오류", error: err.message });
-    }
-  });
-  
 
   app.get("/image-list", async (req, res) => {
     const prefix = req.query.prefix || ""; // 예: "ad/" 또는 "products/"
@@ -314,6 +322,35 @@ async function startServer() {
       res.status(500).json({ message: "삭제 중 오류", error: err.message });
     }
   });
+
+  app.post("/productRegistration", isAdminMiddleware, async (req, res) => {
+    const { title, explanation, price, discountPrice, discountRate, imageURL } =
+      req.body;
+
+    if (!imageURL || !imageKey) {
+      return res.status(400).json({ message: "이미지 URL 및 key가 필요합니다." });
+    }
+
+    try {
+      await db.collection("products").insertOne({
+        title,
+        explanation,
+        price,
+        discountPrice,
+        discountRate,
+        imageURL,
+
+        createdAt: new Date(),
+      });
+
+      res.status(200).json({ message: "상품 등록 완료" });
+    } catch (err) {
+      console.error("상품 등록 오류:", err);
+      res.status(500).json({ message: "DB 저장 실패", error: err.message });
+    }
+  });
+
+
 }
 
 startServer();
