@@ -146,6 +146,23 @@ async function startServer() {
     // API: 회원가입
     app.post("/join/add", async (req, res) => {
       const { email, password, repassword, name, phoneNumber } = req.body;
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      const passwordRegex =
+        /^(?=.*[a-zA-Z])(?=.*\d|.*[!@#$%^&*()_+])[a-zA-Z\d!@#$%^&*()_+]{10,16}$/;
+
+      if (!emailRegex.test(email)) {
+        return res
+          .status(400)
+          .json({ message: "올바른 이메일 형식이 아닙니다." });
+      }
+
+      if (!passwordRegex.test(password)) {
+        return res.status(400).json({
+          message:
+            "비밀번호는 10~16자이며, 영문/숫자/특수문자 중 2가지 이상을 포함해야 합니다.",
+        });
+      }
+
       if (password !== repassword) {
         return res
           .status(400)
@@ -316,6 +333,14 @@ async function startServer() {
         },
       });
 
+      await db.collection("products").deleteMany({
+        imageURL: {
+          $in: keys.map(
+            (k) => `https://yogojo.s3.ap-northeast-2.amazonaws.com/${k}`
+          ),
+        },
+      });
+
       const result = await s3.send(command);
       res.status(200).json({ message: "삭제 완료", deleted: result.Deleted });
     } catch (err) {
@@ -354,77 +379,91 @@ async function startServer() {
   });
 
   // ✅ 상품 목록 페이징 조회
-app.get("/products", async (req, res) => {
-  const page = parseInt(req.query.page || "1");
-  const limit = parseInt(req.query.limit || "10");
-  const skip = (page - 1) * limit;
+  app.get("/products", async (req, res) => {
+    const page = parseInt(req.query.page || "1");
+    const limit = parseInt(req.query.limit || "10");
+    const skip = (page - 1) * limit;
 
-  try {
-    const total = await db.collection("products").countDocuments();
-    const products = await db
-      .collection("products")
-      .find({})
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .toArray();
+    try {
+      const total = await db.collection("products").countDocuments();
+      const products = await db
+        .collection("products")
+        .find({})
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .toArray();
 
-    res.json({ products, total }); // ✅ total 추가
-  } catch (e) {
-    res.status(500).json({ message: "상품 조회 실패", error: e.message });
-  }
-});
+      res.json({ products, total });
+    } catch (e) {
+      res.status(500).json({ message: "상품 조회 실패", error: e.message });
+    }
+  });
 
-// ✅ 상품 수정
-app.put("/products/:id", isAdminMiddleware, async (req, res) => {
-  const { id } = req.params;
-  const update = req.body;
+  // ✅ 상품 수정
+  app.put("/products/:id", isAdminMiddleware, async (req, res) => {
+    const { id } = req.params;
+    const update = req.body;
 
-  try {
-    const product = await db.collection("products").findOne({ _id: new ObjectId(id) });
-    if (!product) return res.status(404).json({ message: "상품을 찾을 수 없습니다." });
+    try {
+      const product = await db
+        .collection("products")
+        .findOne({ _id: new ObjectId(id) });
+      if (!product)
+        return res.status(404).json({ message: "상품을 찾을 수 없습니다." });
 
-    // 새 이미지URL이 있고 기존과 다르면 기존 이미지 삭제
-    if (update.imageURL && update.imageURL !== product.imageURL) {
-      const oldKey = product.imageURL.split(".amazonaws.com/")[1];
-      if (oldKey) {
-        try {
-          await s3.send(new DeleteObjectCommand({ Bucket: "yogojo", Key: oldKey }));
-          console.log(`기존 이미지 삭제 성공: ${oldKey}`);
-        } catch (delErr) {
-          console.error("기존 이미지 삭제 실패:", delErr);
-          // 삭제 실패해도 계속 진행 가능하게 함
+      // 새 이미지URL이 있고 기존과 다르면 기존 이미지 삭제
+      if (update.imageURL && update.imageURL !== product.imageURL) {
+        const oldKey = product.imageURL.split(".amazonaws.com/")[1];
+        if (oldKey) {
+          try {
+            await s3.send(
+              new DeleteObjectCommand({ Bucket: "yogojo", Key: oldKey })
+            );
+            console.log(`기존 이미지 삭제 성공: ${oldKey}`);
+          } catch (delErr) {
+            console.error("기존 이미지 삭제 실패:", delErr);
+            // 삭제 실패해도 계속 진행 가능하게 함
+          }
         }
       }
+
+      // DB 업데이트
+      const result = await db
+        .collection("products")
+        .updateOne({ _id: new ObjectId(id) }, { $set: update });
+
+      res.json({ message: "수정 완료", result });
+    } catch (err) {
+      console.error("상품 수정 오류:", err);
+      res.status(500).json({ message: "수정 실패", error: err.message });
     }
+  });
 
-    // DB 업데이트
-    const result = await db.collection("products").updateOne(
-      { _id: new ObjectId(id) },
-      { $set: update }
-    );
+  // ✅ 상품 삭제 + S3 이미지 삭제
+  app.delete("/product/:id", isAdminMiddleware, async (req, res) => {
+    const { id } = req.params;
+    const { imageURL } = req.body;
+    const key = imageURL.split(".amazonaws.com/")[1];
 
-    res.json({ message: "수정 완료", result });
-  } catch (err) {
-    console.error("상품 수정 오류:", err);
-    res.status(500).json({ message: "수정 실패", error: err.message });
-  }
-});
+    try {
+      await db.collection("products").deleteOne({ _id: new ObjectId(id) });
+      await s3.send(new DeleteObjectCommand({ Bucket: "yogojo", Key: key }));
+      res.json({ message: "삭제 완료" });
+    } catch (err) {
+      res.status(500).json({ message: "삭제 오류", error: err.message });
+    }
+  });
 
-// ✅ 상품 삭제 + S3 이미지 삭제
-app.delete("/product/:id", isAdminMiddleware, async (req, res) => {
-  const { id } = req.params;
-  const { imageURL } = req.body;
-  const key = imageURL.split(".amazonaws.com/")[1];
-
+  app.get("/products/all", async (req, res) => {
   try {
-    await db.collection("products").deleteOne({ _id: new ObjectId(id) });
-    await s3.send(new DeleteObjectCommand({ Bucket: "yogojo", Key: key }));
-    res.json({ message: "삭제 완료" });
-  } catch (err) {
-    res.status(500).json({ message: "삭제 오류", error: err.message });
+    const allProducts = await db.collection("products").find({}).toArray();
+    res.json({ allProducts });
+  } catch (e) {
+    res.status(500).json({ message: "전체 상품 조회 실패", error: e.message });
   }
 });
+
 }
 
 startServer();

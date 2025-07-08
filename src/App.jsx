@@ -11,6 +11,7 @@ import { AuthProvider } from "./AuthContext.jsx";
 import Mypage from "./page/mypage.jsx"
 import Detail from "./page/detail.jsx"
 import AdminRoute from "./components/AdminRoute.jsx"
+import AllProducts from "./page/allproducts.jsx";
 
 function App() {
   return (
@@ -29,6 +30,7 @@ function App() {
             <Route path="/sale-products" element={<SaleProducts />} />
             <Route path="/join" element={<Join />} />
             <Route path="/detail" element={<Detail />}></Route>
+            <Route path="/allproducts" element={<AllProducts/>}></Route>
           </Route>
         </Routes>
       </AuthProvider>

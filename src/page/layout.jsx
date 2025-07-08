@@ -56,7 +56,7 @@ function Layout() {
               </li>
               <li
                 onClick={() => {
-                  navigate("/");
+                  navigate("/allproducts");
                 }}
               >
                 모든상품

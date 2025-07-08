@@ -2,14 +2,12 @@ import { jwtDecode } from "jwt-decode";
 import { useState, useEffect } from "react";
 import ProductsList from "./products-list";
 
-
 function Manager() {
   const [userName, setUserName] = useState(null);
   const [files, setfiles] = useState(null); // 선택된 파일
   const [prefix, setPrefix] = useState("products"); // 기본 prefix
   const [images, setImages] = useState([]);
   const [selected, setSelected] = useState([]);
- 
 
   // 파일 선택 핸들러
   const handleChange = (e) => {

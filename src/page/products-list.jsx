@@ -4,7 +4,6 @@ function ProductsList() {
   const [title, setTitle] = useState("");
   const [explanation, setExplanation] = useState("");
   const [price, setPrice] = useState("");
-  const [discountPrice, setDiscountPrice] = useState("");
   const [discountRate, setDiscountRate] = useState("");
   const [previewUrl, setPreviewUrl] = useState(null);
   const [imageFile, setImageFile] = useState(null);
@@ -60,6 +59,14 @@ function ProductsList() {
       const imageUrl = uploadData.location?.[0];
       if (!imageUrl) return alert("이미지 업로드 실패");
 
+      // 숫자로 변환 후 계산 (int32로 변환)
+      const parsedPrice = parseInt(price, 10);
+      const parsedDiscountRate = parseInt(discountRate, 10);
+
+      const calculatedDiscountPrice = Math.round(
+        parsedPrice * (1 - parsedDiscountRate / 100)
+      );
+
       const saveRes = await fetch("/api/productRegistration", {
         method: "POST",
         headers: {
@@ -69,9 +76,9 @@ function ProductsList() {
         body: JSON.stringify({
           title,
           explanation,
-          price,
-          discountPrice,
-          discountRate,
+          price: parsedPrice,
+          discountRate: parsedDiscountRate,
+          discountPrice: calculatedDiscountPrice,
           imageURL: imageUrl,
         }),
       });
@@ -82,7 +89,6 @@ function ProductsList() {
       setTitle("");
       setExplanation("");
       setPrice("");
-      setDiscountPrice("");
       setDiscountRate("");
       setImageFile(null);
       setPreviewUrl(null);
@@ -94,6 +100,11 @@ function ProductsList() {
 
   const handleDeleteMultiple = async () => {
     if (!confirm("정말 삭제하시겠습니까?")) return;
+
+    const keys = products
+      .filter((p) => selectedIds.includes(p._id))
+      .map((p) => p.imageURL.split(".amazonaws.com/")[1]);
+
     try {
       const res = await fetch(`/api/delete-multiple`, {
         method: "DELETE",
@@ -101,7 +112,7 @@ function ProductsList() {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ ids: selectedIds }),
+        body: JSON.stringify({ keys }),
       });
 
       const result = await res.json();
@@ -113,6 +124,19 @@ function ProductsList() {
       console.error("삭제 실패:", err);
     }
   };
+
+  // 수정 시 가격과 할인율 변경되면 할인가 자동 계산
+  useEffect(() => {
+    if (editingId !== null) {
+      const priceNum = parseInt(editingProduct.price, 10);
+      const discountRateNum = parseInt(editingProduct.discountRate, 10);
+
+      if (!isNaN(priceNum) && !isNaN(discountRateNum)) {
+        const discountPrice = Math.round(priceNum * (1 - discountRateNum / 100));
+        setEditingProduct((prev) => ({ ...prev, discountPrice }));
+      }
+    }
+  }, [editingProduct.price, editingProduct.discountRate, editingId]);
 
   const handleUpdate = async () => {
     const formData = new FormData();
@@ -131,13 +155,26 @@ function ProductsList() {
 
     const { _id, ...updateFields } = editingProduct;
 
+    // int32 변환 및 할인가 계산
+    const parsedPrice = parseInt(updateFields.price, 10);
+    const parsedDiscountRate = parseInt(updateFields.discountRate, 10);
+    const calculatedDiscountPrice = Math.round(
+      parsedPrice * (1 - parsedDiscountRate / 100)
+    );
+
     const res = await fetch(`/api/products/${_id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ ...updateFields, imageURL }),
+      body: JSON.stringify({
+        ...updateFields,
+        price: parsedPrice,
+        discountRate: parsedDiscountRate,
+        discountPrice: calculatedDiscountPrice,
+        imageURL,
+      }),
     });
 
     const result = await res.json();
@@ -170,16 +207,52 @@ function ProductsList() {
       <form onSubmit={handleSubmit}>
         {previewUrl && <img src={previewUrl} alt="미리보기" width="150" />}
         <input type="file" accept="image/*" onChange={handleImageChange} />
-        <input placeholder="title" value={title} onChange={(e) => setTitle(e.target.value)} />
-        <input placeholder="explanation" value={explanation} onChange={(e) => setExplanation(e.target.value)} />
-        <input placeholder="price" value={price} onChange={(e) => setPrice(e.target.value)} />
-        <input placeholder="discount price" value={discountPrice} onChange={(e) => setDiscountPrice(e.target.value)} />
-        <input placeholder="discount rate" value={discountRate} onChange={(e) => setDiscountRate(e.target.value)} />
+        <input
+          placeholder="title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+        />
+        <input
+          placeholder="explanation"
+          value={explanation}
+          onChange={(e) => setExplanation(e.target.value)}
+        />
+        <input
+          placeholder="price"
+          value={price}
+          onChange={(e) => setPrice(e.target.value)}
+          type="number"
+          min="0"
+        />
+        <input
+          placeholder="discount rate"
+          value={discountRate}
+          onChange={(e) => setDiscountRate(e.target.value)}
+          type="number"
+          min="0"
+          max="100"
+        />
+        <input
+          placeholder="할인가 (자동 계산)"
+          value={
+            Math.round(
+              (parseInt(price, 10) || 0) *
+                (1 - (parseInt(discountRate, 10) || 0) / 100)
+            )
+          }
+          readOnly
+        />
         <button type="submit">상품 등록</button>
       </form>
 
       <h2>상품 목록</h2>
-      <button onClick={handleDeleteMultiple} disabled={selectedIds.length === 0}>선택 삭제</button>
+      <button
+        onClick={handleDeleteMultiple}
+        disabled={selectedIds.length === 0}
+      >
+        선택 삭제
+      </button>
+
       <table border="1" cellPadding="8">
         <thead>
           <tr>
@@ -196,34 +269,127 @@ function ProductsList() {
         <tbody>
           {products.map((p) => (
             <tr key={p._id}>
-              <td><input type="checkbox" checked={selectedIds.includes(p._id)} onChange={() => toggleSelect(p._id)} /></td>
               <td>
-                <img src={editingId === p._id ? (editingPreviewUrl || editingProduct.imageURL) : p.imageURL} width="80" />
-                {editingId === p._id && <input type="file" onChange={handleEditingImageChange} />}
+                <input
+                  type="checkbox"
+                  checked={selectedIds.includes(p._id)}
+                  onChange={() => toggleSelect(p._id)}
+                />
               </td>
-              <td>{editingId === p._id ? <input value={editingProduct.title || ""} onChange={(e) => setEditingProduct({ ...editingProduct, title: e.target.value })} /> : p.title}</td>
-              <td>{editingId === p._id ? <input value={editingProduct.explanation || ""} onChange={(e) => setEditingProduct({ ...editingProduct, explanation: e.target.value })} /> : p.explanation}</td>
-              <td>{editingId === p._id ? <input value={editingProduct.price || ""} onChange={(e) => setEditingProduct({ ...editingProduct, price: e.target.value })} /> : p.price}</td>
-              <td>{editingId === p._id ? <input value={editingProduct.discountPrice || ""} onChange={(e) => setEditingProduct({ ...editingProduct, discountPrice: e.target.value })} /> : p.discountPrice}</td>
-              <td>{editingId === p._id ? <input value={editingProduct.discountRate || ""} onChange={(e) => setEditingProduct({ ...editingProduct, discountRate: e.target.value })} /> : p.discountRate}</td>
+              <td>
+                <img
+                  src={
+                    editingId === p._id
+                      ? editingPreviewUrl || editingProduct.imageURL
+                      : p.imageURL
+                  }
+                  width="80"
+                />
+                {editingId === p._id && (
+                  <input type="file" onChange={handleEditingImageChange} />
+                )}
+              </td>
+              <td>
+                {editingId === p._id ? (
+                  <input
+                    value={editingProduct.title || ""}
+                    onChange={(e) =>
+                      setEditingProduct({
+                        ...editingProduct,
+                        title: e.target.value,
+                      })
+                    }
+                  />
+                ) : (
+                  p.title
+                )}
+              </td>
+              <td>
+                {editingId === p._id ? (
+                  <input
+                    value={editingProduct.explanation || ""}
+                    onChange={(e) =>
+                      setEditingProduct({
+                        ...editingProduct,
+                        explanation: e.target.value,
+                      })
+                    }
+                  />
+                ) : (
+                  p.explanation
+                )}
+              </td>
+              <td>
+                {editingId === p._id ? (
+                  <input
+                    value={editingProduct.price || ""}
+                    onChange={(e) =>
+                      setEditingProduct({
+                        ...editingProduct,
+                        price: e.target.value,
+                      })
+                    }
+                    type="number"
+                    min="0"
+                  />
+                ) : (
+                  p.price
+                )}
+              </td>
+              <td>
+                {editingId === p._id ? (
+                  <input value={editingProduct.discountPrice || ""} readOnly />
+                ) : (
+                  p.discountPrice
+                )}
+              </td>
+              <td>
+                {editingId === p._id ? (
+                  <input
+                    value={editingProduct.discountRate || ""}
+                    onChange={(e) =>
+                      setEditingProduct({
+                        ...editingProduct,
+                        discountRate: e.target.value,
+                      })
+                    }
+                    type="number"
+                    min="0"
+                    max="100"
+                  />
+                ) : (
+                  p.discountRate
+                )}
+              </td>
               <td>
                 {editingId === p._id ? (
                   <>
-                    <button type="button" onClick={handleUpdate}>저장</button>
-                    <button type="button" onClick={() => {
-                      setEditingId(null);
-                      setEditingProduct({});
-                      setEditingImageFile(null);
-                      setEditingPreviewUrl(null);
-                    }}>취소</button>
+                    <button type="button" onClick={handleUpdate}>
+                      저장
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingId(null);
+                        setEditingProduct({});
+                        setEditingImageFile(null);
+                        setEditingPreviewUrl(null);
+                      }}
+                    >
+                      취소
+                    </button>
                   </>
                 ) : (
-                  <button onClick={() => {
-                    setEditingId(p._id);
-                    setEditingProduct({ ...p });
-                    setEditingPreviewUrl(null);
-                    setEditingImageFile(null);
-                  }}>수정</button>
+                  <button
+                    onClick={() => {
+                      setEditingId(p._id);
+                      setEditingProduct({ ...p });
+                      setEditingPreviewUrl(null);
+                      setEditingImageFile(null);
+                    }}
+                  >
+                    수정
+                  </button>
                 )}
               </td>
             </tr>
@@ -232,9 +398,18 @@ function ProductsList() {
       </table>
 
       <div>
-        <button disabled={page === 1} onClick={() => setPage(page - 1)}>이전</button>
-        <span>{page} / {totalPages} 페이지</span>
-        <button disabled={page === totalPages} onClick={() => setPage(page + 1)}>다음</button>
+        <button disabled={page === 1} onClick={() => setPage(page - 1)}>
+          이전
+        </button>
+        <span>
+          {page} / {totalPages} 페이지
+        </span>
+        <button
+          disabled={page === totalPages}
+          onClick={() => setPage(page + 1)}
+        >
+          다음
+        </button>
       </div>
     </div>
   );
