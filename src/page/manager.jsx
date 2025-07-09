@@ -21,6 +21,12 @@ function Manager() {
       return;
     }
 
+    const token = localStorage.getItem("token"); // ✅ 토큰 가져오기
+    if (!token) {
+      alert("로그인이 필요합니다.");
+      return;
+    }
+
     const formData = new FormData();
     for (let i = 0; i < files.length; i++) {
       formData.append("img", files[i]);
@@ -30,15 +36,20 @@ function Manager() {
       const res = await fetch(`/api/upload?prefix=${prefix}`, {
         method: "POST",
         body: formData,
+        headers: {
+          Authorization: `Bearer ${token}`, // ✅ 여기에 토큰 추가
+        },
       });
+
       if (!res.ok) {
         const text = await res.text();
         throw new Error("서버 오류: " + text);
       }
+
       const data = await res.json();
       alert("업로드 완료");
-      setfiles(null); // 파일 초기화
-      fetchImages(); // 이미지 다시 불러오기
+      setfiles(null);
+      fetchImages();
     } catch (err) {
       console.error("업로드 실패:", err);
     }
