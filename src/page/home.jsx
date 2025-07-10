@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Card from "../components/card.jsx";
+import axios from "axios";
 
 function Home() {
   const [page, setPage] = useState(0); // 현재 슬라이드 인덱스
   const [adImages, setAdImages] = useState([]);
   const navigate = useNavigate();
+  const [saleProducts, setSaleProducts] = useState([]);
 
   useEffect(() => {
     const fetchImages = async () => {
@@ -18,10 +20,9 @@ function Home() {
         console.error("이미지 불러오기 실패:", err);
       }
     };
-  
+
     fetchImages();
   }, []);
-  
 
   useEffect(() => {
     if (adImages.length === 0) return; // 이미지 없으면 동작하지 않도록
@@ -33,6 +34,17 @@ function Home() {
     return () => clearInterval(interval);
   }, [adImages]);
 
+  useEffect(() => {
+    const saleProducts = async () => {
+      try {
+        const res = await axios.get("/api/saleProducts");
+        setSaleProducts(res.data.saleProducts);
+      } catch (err) {
+        console.log("에러남 :", err);
+      }
+    };
+    saleProducts();
+  }, []);
   return (
     <>
       <div className="main-container">
@@ -81,8 +93,18 @@ function Home() {
         <h1>요고특가</h1>
         <span>득템은 타이밍, 기회는 지금뿐!</span>
         <div className="product-row">
-          {[...Array(8)].map((_, i) => (
-            <Card key={i} />
+          {saleProducts.map((data, i) => (
+            <Card
+              key={i}
+              title={data.title}
+              explanation={data.explanation}
+              price={data.price}
+              discount={data.discount}
+              discountRate={data.discountRate}
+              discountPrice={data.discountPrice}
+              imageURL={data.imageURL}
+              data={data}
+            />
           ))}
         </div>
         <div style={{ display: "flex", justifyContent: "center" }}>

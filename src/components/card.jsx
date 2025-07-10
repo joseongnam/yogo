@@ -5,7 +5,7 @@ import {
   faMagnifyingGlass,
 } from "@fortawesome/free-solid-svg-icons";
 import { faUser } from "@fortawesome/free-regular-svg-icons";
-import { Navigate, Route, Routes } from "react-router-dom";
+import { useNavigate, Route, Routes } from "react-router-dom";
 
 function Card({
   title,
@@ -14,9 +14,17 @@ function Card({
   discountRate,
   discountPrice,
   imageURL,
+  data,
 }) {
+  let navigate = useNavigate();
+
   return (
-    <div className="product-card">
+    <div
+      className="product-card"
+      onClick={() => {
+        navigate("/detail/" + data._id);
+      }}
+    >
       <img src={imageURL} alt="상품이미지" />
       <h4>제목 : {title}</h4>
       <p>설명 : {explanation}</p>

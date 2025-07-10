@@ -1,23 +1,25 @@
-import ProductDetail from "../components/product-detail"
+import ProductDetail from "../components/product-detail";
+import { useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import axios from "axios";
 
 function Detail() {
+  const [product, setProduct] = useState();
+  const { id } = useParams();
 
-    const [adImages, setAdImages] = useState([]);
+  useEffect(() => {
+    const products = async () => {
+      try {
+        const res = await axios.get(`/api/products/${id}`);
+        setProduct(res.data);
+      } catch (err) {
+        console.error("이미지 불러오기 실패:", err);
+      }
+    };
+    products();
+  }, [id]);
 
-    useEffect(() => {
-        const fetchImages = async () => {
-          try {
-            const res = await fetch("/api/image-list?prefix=products/");
-            if (!res.ok) throw new Error(`서버 오류: ${res.status}`);
-            const data = await res.json();
-            setAdImages(data);
-          } catch (err) {
-            console.error("이미지 불러오기 실패:", err);
-          }
-        };
-        fetchImages();
-    }, []);
-
+  if (!product) return <div>로딩 중...</div>;
 
   return (
     <>
@@ -25,18 +27,18 @@ function Detail() {
         <div className="registration-container">
           <div className="product-img">
             <div className="detail-slide">
-                <img src="" alt="상품이미지" />
+              <img src={product.imageURL} alt="상품이미지" />
             </div>
             <div>
-                <img src="" alt="" />
-                <img src="" alt="" />
-                <img src="" alt="" />
-                <img src="" alt="" />
-                <img src="" alt="" />
-                <img src="" alt="" />
+              <img src="" alt="" />
+              <img src="" alt="" />
+              <img src="" alt="" />
+              <img src="" alt="" />
+              <img src="" alt="" />
+              <img src="" alt="" />
             </div>
           </div>
-          <ProductDetail/>
+          <ProductDetail />
         </div>
         <div className="purchase"></div>
       </div>

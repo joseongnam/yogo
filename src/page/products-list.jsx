@@ -1,4 +1,6 @@
+import axios from "axios";
 import { useEffect, useState } from "react";
+import { set } from "react-hook-form";
 
 function ProductsList() {
   const [title, setTitle] = useState("");
@@ -15,6 +17,11 @@ function ProductsList() {
   const [selectedIds, setSelectedIds] = useState([]);
   const [totalPages, setTotalPages] = useState(1);
   const [editingPreviewUrl, setEditingPreviewUrl] = useState(null);
+  const [copyId, setCopyId] = useState(null);
+  const [copyProduct, setCopyProduct] = useState({});
+
+  const [saleProducts, setSaleProducts] = useState([]); // 특가 상품 목록
+  const [salePage, setSalePage] = useState(1); // 특가
 
   const token = localStorage.getItem("token");
 
@@ -29,8 +36,57 @@ function ProductsList() {
     }
   };
 
+  const moveProduct = async (id) => {
+    try {
+      const res = await axios.post(`/api/products/copy/${id}`, null, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setSaleProducts((prev) => [...prev, res.data.copiedProduct]);
+      console.log("복사 완료");
+    } catch (err) {
+      console.error("특가 상품 등록 오류:", err);
+    }
+  };
+
+  const saleProductDelete = async (id) => {
+    if (!confirm("정말 삭제하시겠습니까?")) return;
+
+    try {
+      const res = await axios.delete(`/api/saleProducts/delete/${id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      const result = await res.data;
+      if (!res.ok) return alert(result.message);
+      alert("삭제 완료!");
+    } catch (err) {
+      console.error("특가 상품 삭제 실패:", err);
+    }
+  };
+
+  const fetchSaleProducts = async () => {
+    try {
+      const res = await fetch("/api/saleProducts");
+      const data = await res.json();
+      setSaleProducts(data.saleProducts || []);
+    } catch (e) {
+      console.error("특가 상품 목록 불러오기 실패", e);
+    }
+  };
+
+  useEffect(() => {
+    fetchSaleProducts();
+  }, []);
+
   useEffect(() => {
     fetchProducts(page);
+    fetchSaleProducts();
   }, [page]);
 
   const handleImageChange = (e) => {
@@ -132,7 +188,9 @@ function ProductsList() {
       const discountRateNum = parseInt(editingProduct.discountRate, 10);
 
       if (!isNaN(priceNum) && !isNaN(discountRateNum)) {
-        const discountPrice = Math.round(priceNum * (1 - discountRateNum / 100));
+        const discountPrice = Math.round(
+          priceNum * (1 - discountRateNum / 100)
+        );
         setEditingProduct((prev) => ({ ...prev, discountPrice }));
       }
     }
@@ -234,12 +292,10 @@ function ProductsList() {
         />
         <input
           placeholder="할인가 (자동 계산)"
-          value={
-            Math.round(
-              (parseInt(price, 10) || 0) *
-                (1 - (parseInt(discountRate, 10) || 0) / 100)
-            )
-          }
+          value={Math.round(
+            (parseInt(price, 10) || 0) *
+              (1 - (parseInt(discountRate, 10) || 0) / 100)
+          )}
           readOnly
         />
         <button type="submit">상품 등록</button>
@@ -391,6 +447,13 @@ function ProductsList() {
                     수정
                   </button>
                 )}
+                <button
+                  onClick={() => {
+                    moveProduct(p._id);
+                  }}
+                >
+                  특가
+                </button>
               </td>
             </tr>
           ))}
@@ -398,18 +461,62 @@ function ProductsList() {
       </table>
 
       <div>
-        <button disabled={page === 1} onClick={() => setPage(page - 1)}>
-          이전
-        </button>
-        <span>
-          {page} / {totalPages} 페이지
-        </span>
-        <button
-          disabled={page === totalPages}
-          onClick={() => setPage(page + 1)}
-        >
-          다음
-        </button>
+        <button>이전</button>
+        <span>- / - 페이지</span>
+        <button>다음</button>
+      </div>
+      <h2>특가 상품</h2>
+      <button>선택 삭제</button>
+
+      <table border="1" cellPadding="8">
+        <thead>
+          <tr>
+            <th>선택</th>
+            <th>이미지</th>
+            <th>상품명</th>
+            <th>설명</th>
+            <th>가격</th>
+            <th>할인가</th>
+            <th>할인율</th>
+            <th>수정</th>
+          </tr>
+        </thead>
+        <tbody>
+          {saleProducts.map((p) => (
+            <tr key={p._id}>
+              <td>
+                <input
+                  type="checkbox"
+                  checked={selectedIds.includes(p._id)}
+                  onChange={() => toggleSelect(p._id)}
+                />
+              </td>
+              <td>
+                <img src={p.imageURL} width="80" />
+              </td>
+              <td>{p.title}</td>
+              <td>{p.explanation}</td>
+              <td>{p.price}</td>
+              <td>{p.discountPrice}</td>
+              <td>{p.discountRate}</td>
+              <td>
+                <button
+                  onClick={() => {
+                    saleProductDelete(p._id);
+                  }}
+                >
+                  삭제
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <div>
+        <button>이전</button>
+        <span>- / - 페이지</span>
+        <button>다음</button>
       </div>
     </div>
   );

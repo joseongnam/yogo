@@ -456,14 +456,109 @@ async function startServer() {
   });
 
   app.get("/products/all", async (req, res) => {
-  try {
-    const allProducts = await db.collection("products").find({}).toArray();
-    res.json({ allProducts });
-  } catch (e) {
-    res.status(500).json({ message: "전체 상품 조회 실패", error: e.message });
-  }
-});
+    try {
+      let allProducts = await db.collection("products").find({}).toArray();
 
+      // ObjectId -> string 변환
+      allProducts = allProducts.map((p) => ({
+        ...p,
+        _id: p._id.toString(),
+      }));
+
+      res.json({ allProducts });
+    } catch (e) {
+      res
+        .status(500)
+        .json({ message: "전체 상품 조회 실패", error: e.message });
+    }
+  });
+
+  app.get("/products/:id", async (req, res) => {
+    const { id } = req.params;
+
+    try {
+      const product = await db
+        .collection("products")
+        .findOne({ _id: new ObjectId(id) });
+      if (!product) {
+        return res.status(404).json({ message: "상품을 찾을 수 없습니다." });
+      }
+
+      product._id = product._id.toString();
+
+      res.json(product);
+    } catch (e) {
+      res.status(500).json({ message: "상품 조회 실패", error: e.message });
+    }
+  });
+
+  app.post("/products/copy/:id", isAdminMiddleware, async (req, res) => {
+    const { id } = req.params;
+
+    try {
+      const product = await db
+        .collection("products")
+        .findOne({ _id: new ObjectId(id) });
+
+      if (!product) {
+        return res.status(404).json({ message: "상품을 찾을 수 없습니다." });
+      }
+
+      delete product._id; // _id는 중복되면 안 되므로 제거
+
+      const insertResult = await db
+        .collection("saleProducts")
+        .insertOne(product);
+
+      // 삽입한 새 문서 가져오기 (선택)
+      const newProduct = await db
+        .collection("saleProducts")
+        .findOne({ _id: insertResult.insertedId });
+
+      res.status(200).json({
+        message: "상품이 복사되었습니다.",
+        copiedProduct: newProduct, // 복사된 상품 데이터 전송
+      });
+    } catch (err) {
+      console.error("상품 복사 오류:", err);
+      res.status(500).json({ message: "상품 복사 실패", error: err.message });
+    }
+  });
+
+  app.get("/saleProducts", async (req, res) => {
+    try {
+      const saleProducts = await db
+        .collection("saleProducts")
+        .find({})
+        .toArray();
+      res.json({ saleProducts });
+    } catch (e) {
+      res
+        .status(500)
+        .json({ message: "특가 상품 조회 실패", error: e.message });
+    }
+  });
+
+  app.delete("/saleProducts/delete/:id", isAdminMiddleware, async (req, res) => {
+    const { id } = req.params;
+
+    try {
+      const product = await db
+        .collection("saleProducts")
+        .findOne({ _id: new ObjectId(id) });
+
+      if (!product) {
+        return res.status(404).json({ message: "특가 상품을 찾을 수 없습니다." });
+      }
+      // DB에서 삭제
+      await db.collection("saleProducts").deleteOne({ _id: new ObjectId(id) });
+
+      res.json({ message: "특가 상품 삭제 완료" });
+    } catch (err) {
+      console.error("특가 상품 삭제 오류:", err);
+      res.status(500).json({ message: "삭제 실패", error: err.message });
+    }
+  });
 }
 
 startServer();
